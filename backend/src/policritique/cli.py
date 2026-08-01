@@ -25,9 +25,11 @@ def cli() -> None:
 
 @cli.command("init-db")
 def init_db() -> None:
-    """Create the SQLite database from the SQLAlchemy schema."""
+    """Create or migrate the database schema."""
 
     async def _init() -> None:
+        from policritique.auth.models import User  # noqa: F401 — register user table
+
         db = Database()
         try:
             await db.init()

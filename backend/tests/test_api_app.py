@@ -8,10 +8,13 @@ from httpx import ASGITransport, AsyncClient
 from policritique.api.app import create_app
 from policritique.auth.deps import current_active_user
 from policritique.auth.models import User
+from policritique.db.engine import get_engine
+from policritique.db.init_db import init_schema
 
 
 @pytest.fixture
-def app():
+async def app(isolated_test_db):
+    await init_schema(get_engine())
     return create_app()
 
 
@@ -34,14 +37,16 @@ async def test_health_endpoint(app):
         response = await client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["database"] == "sqlite"
 
 
 @pytest.mark.asyncio
 async def test_parties_requires_authentication(app):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.get("/parties")
+        response = await client.get("/api/parties")
 
     assert response.status_code == 401
 
@@ -55,7 +60,7 @@ async def test_parties_list_with_authenticated_user(app, active_user):
     transport = ASGITransport(app=app)
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/parties")
+            response = await client.get("/api/parties")
     finally:
         app.dependency_overrides.clear()
 
@@ -89,7 +94,7 @@ async def test_cors_preflight_allows_authorization_header(app):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.options(
-            "/parties",
+            "/api/parties",
             headers={
                 "Origin": origin,
                 "Access-Control-Request-Method": "GET",

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -12,25 +10,35 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from policritique.settings import get_settings
+from policritique.db.schema import qualified_schema
+from policritique.settings import Settings, get_settings
 
 
-def database_url(path: Path | None = None) -> str:
-    resolved = path or get_settings().resolved_db_path
-    return f"sqlite+aiosqlite:///{resolved}"
+def create_engine(settings: Settings | None = None) -> AsyncEngine:
+    settings = settings or get_settings()
+    url = settings.resolved_database_url
+    connect_args: dict = {}
+    if settings.is_sqlite:
+        connect_args["check_same_thread"] = False
 
+    engine = create_async_engine(url, connect_args=connect_args)
 
-def create_engine(path: Path | None = None) -> AsyncEngine:
-    engine = create_async_engine(
-        database_url(path),
-        connect_args={"check_same_thread": False},
-    )
+    if settings.is_sqlite:
 
-    @event.listens_for(engine.sync_engine, "connect")
-    def _set_sqlite_pragma(dbapi_connection, connection_record) -> None:
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+        @event.listens_for(engine.sync_engine, "connect")
+        def _set_sqlite_pragma(dbapi_connection, connection_record) -> None:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+
+    elif schema := qualified_schema():
+
+        @event.listens_for(engine.sync_engine, "connect")
+        def _set_postgres_search_path(dbapi_connection, connection_record) -> None:
+            cursor = dbapi_connection.cursor()
+            cursor.execute(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
+            cursor.execute(f'SET search_path TO "{schema}", public')
+            cursor.close()
 
     return engine
 

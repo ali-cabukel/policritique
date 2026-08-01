@@ -1,0 +1,34 @@
+# Bundled stack: FastAPI serves API + static Vite build on :8000.
+#
+#   docker compose -f docker-compose.bundled.yml up --build
+#
+# With local Supabase Postgres instead of SQLite:
+#
+#   docker compose -f docker-compose.bundled.yml -f docker-compose.supabase.yml up --build
+
+services:
+  policritique:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      STATIC_DIR: /app/static
+      CORS_ORIGINS: http://localhost:8000,http://127.0.0.1:8000
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      MANIFESTO_PROJECT_API_KEY: ${MANIFESTO_PROJECT_API_KEY:-}
+    volumes:
+      - policritique_data:/app/backend/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+volumes:
+  policritique_data:

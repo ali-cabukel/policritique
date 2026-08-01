@@ -16,7 +16,7 @@ _session_maker: async_sessionmaker[AsyncSession] | None = None
 def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
-        _engine = create_engine(get_settings().resolved_db_path)
+        _engine = create_engine(get_settings())
     return _engine
 
 
