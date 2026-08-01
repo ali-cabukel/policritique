@@ -10,13 +10,18 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    func,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from policritique.db.schema import metadata
+
 
 class Base(DeclarativeBase):
-    pass
+    metadata = metadata
+
+
+_TIMESTAMP_DEFAULT = text("CURRENT_TIMESTAMP")
 
 
 class Party(Base):
@@ -29,7 +34,7 @@ class Party(Base):
     short_name: Mapped[str | None] = mapped_column(String)
     register: Mapped[str | None] = mapped_column(String)
     collected_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=func.datetime("now")
+        String, nullable=False, server_default=_TIMESTAMP_DEFAULT
     )
 
     election_results: Mapped[list[ElectionResult]] = relationship(back_populates="party")
@@ -48,7 +53,7 @@ class Election(Base):
     parliament_period: Mapped[str | None] = mapped_column(String)
     source: Mapped[str | None] = mapped_column(String)
     collected_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=func.datetime("now")
+        String, nullable=False, server_default=_TIMESTAMP_DEFAULT
     )
 
     results: Mapped[list[ElectionResult]] = relationship(back_populates="election")
@@ -66,7 +71,7 @@ class Constituency(Base):
     valid_from: Mapped[str | None] = mapped_column(String)
     valid_to: Mapped[str | None] = mapped_column(String)
     collected_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=func.datetime("now")
+        String, nullable=False, server_default=_TIMESTAMP_DEFAULT
     )
 
     election_results: Mapped[list[ElectionResult]] = relationship(back_populates="constituency")
@@ -84,7 +89,7 @@ class Member(Base):
     gender: Mapped[str | None] = mapped_column(String)
     is_current: Mapped[int] = mapped_column(Integer, default=0)
     collected_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=func.datetime("now")
+        String, nullable=False, server_default=_TIMESTAMP_DEFAULT
     )
 
     terms: Mapped[list[MemberTerm]] = relationship(back_populates="member")
@@ -108,7 +113,7 @@ class MemberTerm(Base):
     start_date: Mapped[str | None] = mapped_column(String)
     end_date: Mapped[str | None] = mapped_column(String)
     collected_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=func.datetime("now")
+        String, nullable=False, server_default=_TIMESTAMP_DEFAULT
     )
 
     member: Mapped[Member] = relationship(back_populates="terms")
@@ -126,7 +131,7 @@ class MemberContact(Base):
     value: Mapped[str] = mapped_column(String, nullable=False)
     is_primary: Mapped[int] = mapped_column(Integer, default=0)
     collected_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=func.datetime("now")
+        String, nullable=False, server_default=_TIMESTAMP_DEFAULT
     )
 
     member: Mapped[Member] = relationship(back_populates="contacts")
@@ -152,7 +157,7 @@ class ElectionResult(Base):
     vote_share: Mapped[float | None] = mapped_column(Float)
     is_elected: Mapped[int] = mapped_column(Integer, default=0)
     collected_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=func.datetime("now")
+        String, nullable=False, server_default=_TIMESTAMP_DEFAULT
     )
 
     election: Mapped[Election] = relationship(back_populates="results")
@@ -173,7 +178,7 @@ class Manifesto(Base):
     published_at: Mapped[str | None] = mapped_column(String)
     text: Mapped[str | None] = mapped_column(Text)
     collected_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=func.datetime("now")
+        String, nullable=False, server_default=_TIMESTAMP_DEFAULT
     )
 
     party: Mapped[Party] = relationship(back_populates="manifestos")
@@ -189,5 +194,5 @@ class SyncLog(Base):
     status: Mapped[str] = mapped_column(String, nullable=False)
     message: Mapped[str | None] = mapped_column(Text)
     synced_at: Mapped[str] = mapped_column(
-        String, nullable=False, server_default=func.datetime("now")
+        String, nullable=False, server_default=_TIMESTAMP_DEFAULT
     )

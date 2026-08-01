@@ -1,0 +1,38 @@
+name: Collect political data
+
+on:
+  schedule:
+    # Daily at 03:00 UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: project-837fb0e4-3ce2-42cf-be2
+  REGION: europe-west2
+  JOB: policritique-collect-data
+  WORKLOAD_IDENTITY_PROVIDER: projects/124575765453/locations/global/workloadIdentityPools/github/providers/github-oidc
+  SERVICE_ACCOUNT: cloud-run-deployer@project-837fb0e4-3ce2-42cf-be2.iam.gserviceaccount.com
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Execute collection job
+        run: |
+          gcloud run jobs execute "${{ env.JOB }}" \
+            --project="${{ env.PROJECT_ID }}" \
+            --region="${{ env.REGION }}" \
+            --wait
