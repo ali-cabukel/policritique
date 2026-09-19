@@ -41,7 +41,8 @@ services:
       PG_META_DB_NAME: postgres
       PG_META_DB_USER: postgres
       PG_META_DB_PASSWORD: postgres
-      CRYPTO_KEY: dev-meta-crypto-key-32-chars-min!!
+      # Studio encrypts connection strings with PG_META_CRYPTO_KEY; meta decrypts with CRYPTO_KEY.
+      CRYPTO_KEY: your-encryption-key-32-chars-min
 
   studio:
     image: supabase/studio:2026.07.07-sha-a6a04f2
@@ -60,22 +61,17 @@ services:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       POSTGRES_DB: postgres
+      POSTGRES_USER_READ_WRITE: postgres
+      PG_META_CRYPTO_KEY: your-encryption-key-32-chars-min
       DEFAULT_ORGANIZATION_NAME: policritique
       DEFAULT_PROJECT_NAME: local
       SUPABASE_URL: http://localhost:54321
       SUPABASE_PUBLIC_URL: http://localhost:54321
+      AUTH_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
       SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
       SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsF3FZbgiIM0
 
   backend:
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
-      DATABASE_SCHEMA: policritique
-
-  policritique:
     depends_on:
       db:
         condition: service_healthy
