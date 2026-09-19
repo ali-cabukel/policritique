@@ -7,7 +7,7 @@
 #   docker compose -f docker-compose.bundled.yml -f docker-compose.supabase.yml up --build
 
 services:
-  policritique:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
